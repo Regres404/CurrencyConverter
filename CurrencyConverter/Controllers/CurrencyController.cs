@@ -120,25 +120,35 @@ namespace CurrencyConverter.Controllers
         [HttpPost]
         public JsonResult CurrencyConverter(CurrencyConverterModel model)
         {
-
-            DateTime? specifiedDate = model.Date;
-
-            List<string> selectedCurrencies = CreateCurrencyList(model.CurrencyFrom, model.CurrencyTo);
-
-            EnvelopeModel envelope = GetEcbEnvelopeData(specifiedDate, specifiedDate, selectedCurrencies);
-
-            decimal? currencyFromRate = envelope.Cube.FirstOrDefault()?.Cubes.FirstOrDefault()?.Rate;
-            decimal? currencyToRate = envelope.Cube.LastOrDefault()?.Cubes.LastOrDefault()?.Rate;
-
-            decimal result = 0;
-            if (currencyFromRate != null && currencyFromRate != null)
+            if (ModelState.IsValid)
             {
-                result = model.Amount / currencyFromRate.Value * currencyToRate.Value;
+                DateTime? specifiedDate = model.Date;
+
+                List<string> selectedCurrencies = CreateCurrencyList(model.CurrencyFrom, model.CurrencyTo);
+
+                EnvelopeModel envelope = GetEcbEnvelopeData(specifiedDate, specifiedDate, selectedCurrencies);
+
+                decimal? currencyFromRate = envelope.Cube.FirstOrDefault()?.Cubes.Find(x => x.Currency == model.CurrencyFrom)?.Rate;
+                decimal? currencyToRate = envelope.Cube.LastOrDefault()?.Cubes.Find(x => x.Currency == model.CurrencyTo)?.Rate;
+
+                decimal result = 0;
+                if (currencyFromRate != null && currencyFromRate != null)
+                {
+                    result = model.Amount / currencyFromRate.Value * currencyToRate.Value;
+                }
+
+                model.Amount = result;
+
+                return Json(new { Result = result });
             }
+            else
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
 
-            model.Amount = result;
-
-            return Json(new { Result = result });
+                return Json(new { Errors = errors });
+            }
         }
 
         /// <summary>

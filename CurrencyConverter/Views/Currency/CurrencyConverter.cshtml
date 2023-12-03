@@ -5,20 +5,23 @@
 
 <h1>@ViewBag.Title</h1>
 
+<div style="color:red" id="ValidationError"></div>
+
+
 @using (Html.BeginForm("CurrencyConverter", "Currency", FormMethod.Post, new { id = "currencyConverterForm" }))
 {
     @Html.LabelFor(x => x.CurrencyFrom, "From Currency")
-    @Html.DropDownList("CurrencyFrom", ViewBag.AvailableCurrencies as SelectList, "-Select-", new { required = "required" })
+    @Html.DropDownList("CurrencyFrom", ViewBag.AvailableCurrencies as SelectList, "-Select-")
 
 
     @Html.LabelFor(x => x.CurrencyTo, "To Currency")
-    @Html.DropDownList("CurrencyTo", ViewBag.AvailableCurrencies as SelectList, "-Select-", new { required = "required" })
+    @Html.DropDownList("CurrencyTo", ViewBag.AvailableCurrencies as SelectList, "-Select-")
 
     <label for="Date">Date:</label>
     <input type="date" id="targetDate" name="Date" value="" required />
 
     @Html.LabelFor(x => x.Amount, "Amount")
-    @Html.TextBoxFor(x => x.Amount, new { required = "required" });
+    @Html.TextBoxFor(x => x.Amount)
 
     @Html.LabelFor(x => x.ConvertedAmount, "Result")
     @Html.TextBoxFor(x => x.ConvertedAmount, new { @readonly = "readonly", id = "ConvertedAmount" })
@@ -28,12 +31,17 @@
 
 <script>
     function submitForm() {
+        $("#ConvertedAmount").val(null)
         jQuery.ajax({
                         url: '@Url.Action("CurrencyConverter", "Currency")',
                         type: 'POST',
                         data: $('#currencyConverterForm').serialize(),
              success: function (data) {
-                 $("#ConvertedAmount").val(data.Result)
+                 if (data.Errors) {                     
+                     $("#ValidationError").html(data.Errors.join('</br>'));
+                 } else {
+                     $("#ConvertedAmount").val(data.Result);
+                 }
                         },
                         error: function (data) {
                             alert("Something went wrong.");

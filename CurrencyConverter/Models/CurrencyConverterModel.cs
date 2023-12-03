@@ -17,6 +17,6 @@ namespace CurrencyConverter.Models
         [Required(ErrorMessage = "Amount is required.")]
         public decimal Amount { get; set; }
 
-        public decimal ConvertedAmount { get; set; }
+        public decimal? ConvertedAmount { get; set; }
     }
 }
