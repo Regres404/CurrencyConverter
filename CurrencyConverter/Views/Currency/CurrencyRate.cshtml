@@ -1,0 +1,43 @@
+﻿@using System.Web.UI.HtmlControls
+@model CurrencyConverter.Models.EnvelopeModel
+@{
+    ViewBag.Title = "Currency rates";
+}
+
+<h1>@ViewBag.Title</h1>
+
+@if (TempData["ValidationErrors"] != null)
+{
+    foreach (var error in  (List<string>)TempData["ValidationErrors"])
+    {
+        <div style="color:red">@error</div>
+    }
+}
+
+<p>
+    @using (Html.BeginForm("CurrencyRate", "Currency", FormMethod.Post))
+    {
+    <label for="fromDate">From Date:</label>
+        <input type="date" id="fromDate" name="fromDate" value="@ViewBag.FromDate" required />
+
+        <label for="toDate">To Date:</label>
+        <input type="date" id="toDate" name="toDate" value="@ViewBag.ToDate" required />
+
+        <label for="selectedCurrency">Currency:</label>
+        @Html.DropDownList("selectedCurrency", ViewBag.AvailableCurrencies as SelectList,
+            "-Select-")
+
+        <input type="submit" value="Sort" />
+    }
+</p>
+
+@foreach (var cube in Model.Cube)
+{
+    <h3>Date: @cube.Time.ToString("dd.MM.yyyy")</h3>
+    <ul>
+        @foreach (var cubeItem in cube.Cubes)
+        {
+        <li>Currency code: @cubeItem.Currency, Rate: @cubeItem.Rate</li>
+        }
+    </ul>
+}

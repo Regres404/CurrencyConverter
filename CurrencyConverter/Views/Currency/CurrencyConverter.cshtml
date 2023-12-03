@@ -1,0 +1,43 @@
+﻿@model CurrencyConverter.Models.CurrencyConverterModel
+@{
+    ViewBag.Title = "Currency Converter";
+}
+
+<h1>@ViewBag.Title</h1>
+
+@using (Html.BeginForm("CurrencyConverter", "Currency", FormMethod.Post, new { id = "currencyConverterForm" }))
+{
+    @Html.LabelFor(x => x.CurrencyFrom, "From Currency")
+    @Html.DropDownList("CurrencyFrom", ViewBag.AvailableCurrencies as SelectList, "-Select-", new { required = "required" })
+
+
+    @Html.LabelFor(x => x.CurrencyTo, "To Currency")
+    @Html.DropDownList("CurrencyTo", ViewBag.AvailableCurrencies as SelectList, "-Select-", new { required = "required" })
+
+    <label for="Date">Date:</label>
+    <input type="date" id="targetDate" name="Date" value="" required />
+
+    @Html.LabelFor(x => x.Amount, "Amount")
+    @Html.TextBoxFor(x => x.Amount, new { required = "required" });
+
+    @Html.LabelFor(x => x.ConvertedAmount, "Result")
+    @Html.TextBoxFor(x => x.ConvertedAmount, new { @readonly = "readonly", id = "ConvertedAmount" })
+
+    <input onclick="submitForm()" value="Convert" />
+}
+
+<script>
+    function submitForm() {
+        jQuery.ajax({
+                        url: '@Url.Action("CurrencyConverter", "Currency")',
+                        type: 'POST',
+                        data: $('#currencyConverterForm').serialize(),
+             success: function (data) {
+                 $("#ConvertedAmount").val(data.Result)
+                        },
+                        error: function (data) {
+                            alert("Something went wrong.");
+                        }
+                    })
+    }
+</script>
