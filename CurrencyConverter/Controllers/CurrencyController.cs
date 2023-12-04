@@ -13,6 +13,7 @@ namespace CurrencyConverter.Controllers
 {
     public class CurrencyController : Controller
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         // URL for loading XML currency exchange rate data from the European Central Bank
         protected readonly string _ecbUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml";
 
@@ -22,12 +23,20 @@ namespace CurrencyConverter.Controllers
         [HttpGet]
         public ActionResult CurrencyRate()
         {
-            List<CurrencyCodeModel> currencies = GetCurrencyCodes();
-            ViewBag.AvailableCurrencies = new SelectList(currencies, "Code", "Code");
-            List<string> selectedCurrencies = CreateCurrencyList();
-            EnvelopeModel envelopeModel = GetEcbEnvelopeData(null, null, selectedCurrencies);
+            try
+            {
+                List<CurrencyCodeModel> currencies = GetCurrencyCodes();
+                ViewBag.AvailableCurrencies = new SelectList(currencies, "Code", "Code");
+                List<string> selectedCurrencies = CreateCurrencyList();
+                EnvelopeModel envelopeModel = GetEcbEnvelopeData(null, null, selectedCurrencies);
 
-            return View(envelopeModel);
+                return View(envelopeModel);
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message, e);
+                return View("Error");
+            }
         }
 
         /// <summary>
@@ -36,22 +45,30 @@ namespace CurrencyConverter.Controllers
         [HttpPost]
         public ActionResult CurrencyRate(DateTime? fromDate, DateTime? toDate, string selectedCurrency)
         {
-            EnvelopeModel envelopeModel = new EnvelopeModel();
-
-            List<string> validationErrors = ValidateDates(fromDate, toDate);
-
-            if (validationErrors.Any())
+            try
             {
-                TempData["ValidationErrors"] = validationErrors;
-                return RedirectToAction("CurrencyRate");
+                EnvelopeModel envelopeModel = new EnvelopeModel();
+
+                List<string> validationErrors = ValidateDates(fromDate, toDate);
+
+                if (validationErrors.Any())
+                {
+                    TempData["ValidationErrors"] = validationErrors;
+                    return RedirectToAction("CurrencyRate");
+                }
+
+                List<CurrencyCodeModel> currencies = GetCurrencyCodes();
+                ViewBag.AvailableCurrencies = new SelectList(currencies, "Code", "Code");
+                List<string> selectedCurrencies = CreateCurrencyList(selectedCurrency);
+                envelopeModel = GetEcbEnvelopeData(fromDate, toDate, selectedCurrencies);
+
+                return View(envelopeModel);
             }
-
-            List<CurrencyCodeModel> currencies = GetCurrencyCodes();
-            ViewBag.AvailableCurrencies = new SelectList(currencies, "Code", "Code");
-            List<string> selectedCurrencies = CreateCurrencyList(selectedCurrency);
-            envelopeModel = GetEcbEnvelopeData(fromDate, toDate, selectedCurrencies);
-
-            return View(envelopeModel);
+            catch (Exception e)
+            {
+                log.Error(e.Message, e);
+                return View("Error");
+            }
         }
 
         /// <summary>
@@ -108,10 +125,18 @@ namespace CurrencyConverter.Controllers
         [HttpGet]
         public ActionResult CurrencyConverter()
         {
-
-            List<CurrencyCodeModel> currencies = GetCurrencyCodes();
-            ViewBag.AvailableCurrencies = new SelectList(currencies, "Code", "Code");
-            return View();
+            try
+            {
+                List<CurrencyCodeModel> currencies = GetCurrencyCodes();
+                ViewBag.AvailableCurrencies = new SelectList(currencies, "Code", "Code");
+                return View();
+            }
+            catch (Exception e)
+            {
+                log.Error(e.Message, e);
+                return View("Error");
+            }
+            
         }
 
         /// <summary>
@@ -120,35 +145,45 @@ namespace CurrencyConverter.Controllers
         [HttpPost]
         public JsonResult CurrencyConverter(CurrencyConverterModel model)
         {
-            if (ModelState.IsValid)
+            try
             {
-                DateTime? specifiedDate = model.Date;
-
-                List<string> selectedCurrencies = CreateCurrencyList(model.CurrencyFrom, model.CurrencyTo);
-
-                EnvelopeModel envelope = GetEcbEnvelopeData(specifiedDate, specifiedDate, selectedCurrencies);
-
-                decimal? currencyFromRate = envelope.Cube.FirstOrDefault()?.Cubes.Find(x => x.Currency == model.CurrencyFrom)?.Rate;
-                decimal? currencyToRate = envelope.Cube.LastOrDefault()?.Cubes.Find(x => x.Currency == model.CurrencyTo)?.Rate;
-
-                decimal result = 0;
-                if (currencyFromRate != null && currencyFromRate != null)
+                if (ModelState.IsValid)
                 {
-                    result = model.Amount / currencyFromRate.Value * currencyToRate.Value;
+                    log.Info($"Attempt to convert {model.Amount} {model.CurrencyFrom} to {model.CurrencyTo}");
+                    DateTime? specifiedDate = model.Date;
+
+                    List<string> selectedCurrencies = CreateCurrencyList(model.CurrencyFrom, model.CurrencyTo);
+
+                    EnvelopeModel envelope = GetEcbEnvelopeData(specifiedDate, specifiedDate, selectedCurrencies);
+
+                    decimal? currencyFromRate = envelope.Cube.FirstOrDefault()?.Cubes.Find(x => x.Currency == model.CurrencyFrom)?.Rate;
+                    decimal? currencyToRate = envelope.Cube.LastOrDefault()?.Cubes.Find(x => x.Currency == model.CurrencyTo)?.Rate;
+
+                    decimal result = 0;
+                    if (currencyFromRate != null && currencyFromRate != null)
+                    {
+                        result = model.Amount / currencyFromRate.Value * currencyToRate.Value;
+                    }
+
+                    model.Amount = result;
+
+                    return Json(new { Result = result });
                 }
+                else
+                {
+                    var errors = ModelState.Values.SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
 
-                model.Amount = result;
-
-                return Json(new { Result = result });
+                    return Json(new { Errors = errors });
+                }
             }
-            else
+            catch (Exception e)
             {
-                var errors = ModelState.Values.SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                return Json(new { Errors = errors });
+                log.Error(e.Message, e);
+                return Json(new { Errors = new List<string>{ "Something went wrong" }});
             }
+            
         }
 
         /// <summary>
