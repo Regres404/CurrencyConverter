@@ -8,6 +8,7 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using CurrencyConverter.DAL;
 using CurrencyConverter.Models;
+using Microsoft.Ajax.Utilities;
 
 namespace CurrencyConverter.Controllers
 {
@@ -160,14 +161,21 @@ namespace CurrencyConverter.Controllers
                     decimal? currencyToRate = envelope.Cube.LastOrDefault()?.Cubes.Find(x => x.Currency == model.CurrencyTo)?.Rate;
 
                     decimal result = 0;
-                    if (currencyFromRate != null && currencyFromRate != null)
+                    if (currencyFromRate != null && currencyToRate != null)
                     {
                         result = model.Amount / currencyFromRate.Value * currencyToRate.Value;
                     }
+                    else
+                    {
+                        ModelState.AddModelError("CurrencyRate", "There is no data for the selected date.");
+                        var errors = ModelState.Values.SelectMany(v => v.Errors)
+                            .Select(e => e.ErrorMessage)
+                            .ToList();
 
-                    model.Amount = result;
+                        return Json(new { Errors = errors });
+                    }
 
-                    return Json(new { Result = result });
+                    return Json(new { Result = Math.Round(result, 2) });
                 }
                 else
                 {

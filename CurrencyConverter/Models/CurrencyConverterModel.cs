@@ -15,6 +15,7 @@ namespace CurrencyConverter.Models
         public DateTime? Date { get; set; }
 
         [Required(ErrorMessage = "Amount is required.")]
+        [Range(1, double.MaxValue, ErrorMessage = "The amount must be more than zero.")]
         public decimal Amount { get; set; }
 
         public decimal? ConvertedAmount { get; set; }

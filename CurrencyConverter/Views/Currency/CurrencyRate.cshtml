@@ -4,40 +4,95 @@
     ViewBag.Title = "Currency rates";
 }
 
-<h1>@ViewBag.Title</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center">@ViewBag.Title</h2>
+        </div>
+    </div>
+</div>
 
 @if (TempData["ValidationErrors"] != null)
 {
-    foreach (var error in  (List<string>)TempData["ValidationErrors"])
+    foreach (var error in (List<string>)TempData["ValidationErrors"])
     {
-        <div class="alert alert-primary" role="alert" style="color:red">@error</div>
+        <p class="bg-danger" role="alert" id="ValidationError">@error</p>
     }
 }
 
 <p>
     @using (Html.BeginForm("CurrencyRate", "Currency", FormMethod.Post))
     {
-    <label for="fromDate">From Date:</label>
-        <input type="date" id="fromDate" name="fromDate" value="@ViewBag.FromDate"  />
+        <div class="container">
+            <div class="row mar">
+                <div class="col-md-2">
+                    <label for="fromDate">From Date:</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" id="fromDate" name="fromDate" value="@ViewBag.FromDate" />
+                </div>
+            </div>
+            <div class="row mar">
+                <div class="col-md-2">
+                    <label for="toDate">To Date:</label>
+                </div>
+                <div class="col-md-3">
+                    <input type="date" id="toDate" name="toDate" value="@ViewBag.ToDate" required />
+                </div>
+            </div>
+            <div class="row mar">
+                <div class="col-md-2">
+                    <label for="selectedCurrency">Currency:</label>
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownList("selectedCurrency", ViewBag.AvailableCurrencies as SelectList,
+                         "-Select-")
+                </div>
+            </div>
+            <div class="row mar">
+                <div class="col-md-3">
+                    <input class="btn btn-default btn-sm" type="submit" value="Filter currency" />
+                </div>
+            </div>
+        </div>
 
-        <label for="toDate">To Date:</label>
-        <input type="date" id="toDate" name="toDate" value="@ViewBag.ToDate" required />
 
-        <label for="selectedCurrency">Currency:</label>
-        @Html.DropDownList("selectedCurrency", ViewBag.AvailableCurrencies as SelectList,
-            "-Select-")
+        
+        
 
-        <input class="btn btn-secondary" type="submit" value="Sort" />
+        
+        
+
+        
+        
+
+        
     }
 </p>
 
-@foreach (var cube in Model.Cube)
-{
-    <h3>Date: @cube.Time.ToString("dd.MM.yyyy")</h3>
-    <ul>
-        @foreach (var cubeItem in cube.Cubes)
+<table class="table">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Currency Code</th>
+        <th>Rate</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var cube in Model.Cube)
+    {
+        <tr>
+            <td class="success">@cube.Time.ToString("dd.MM.yyyy")</td>
+            <td class="success" colspan="2"></td>
+        </tr>
+        foreach (var cubeItem in cube.Cubes)
         {
-        <li>Currency code: @cubeItem.Currency, Rate: @cubeItem.Rate</li>
+            <tr>
+                <td></td>
+                <td>@cubeItem.Currency</td>
+                <td>@cubeItem.Rate</td>
+            </tr>
         }
-    </ul>
-}
+    }
+    </tbody>
+</table>

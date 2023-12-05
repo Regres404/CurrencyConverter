@@ -2,42 +2,75 @@
 @{
     ViewBag.Title = "Currency Converter";
 }
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="text-center">@ViewBag.Title</h2>
+        </div>
+    </div>
+</div>
 
-<h1>@ViewBag.Title</h1>
-
-<div style="color:red" id="ValidationError"></div>
-
+<p class="bg-danger" id="ValidationError"></p>
 
 @using (Html.BeginForm("CurrencyConverter", "Currency", FormMethod.Post, new { id = "currencyConverterForm" }))
 {
-    @Html.LabelFor(x => x.CurrencyFrom, "From Currency")
-    @Html.DropDownList("CurrencyFrom", ViewBag.AvailableCurrencies as SelectList, "-Select-")
+    <div class="container">
+        <div class="row mar">
+            <div class="col-md-2">
+                @Html.LabelFor(x => x.CurrencyFrom, "From Currency")
+            </div>
+            <div class="col-md-2">
+                @Html.DropDownList("CurrencyFrom", ViewBag.AvailableCurrencies as SelectList, "-Select-")
+            </div>
+            <div class="col-md-2">
+                @Html.LabelFor(x => x.Amount, "Amount")
+            </div>
+            <div class="col-md-2">
+                @Html.TextBoxFor(x => x.Amount)
+            </div>
+        </div>
+        <div class="row mar">
+            <div class="col-md-2">
+                @Html.LabelFor(x => x.CurrencyTo, "To Currency")
+            </div>
+            <div class="col-md-2">
+                @Html.DropDownList("CurrencyTo", ViewBag.AvailableCurrencies as SelectList, "-Select-")
+            </div>
+            <div class="col-md-2">
+                @Html.LabelFor(x => x.ConvertedAmount, "Result")
+            </div>
+            <div class="col-md-2">
+                @Html.TextBoxFor(x => x.ConvertedAmount, new { @readonly = "readonly", id = "ConvertedAmount" })
+            </div>
+        </div>
+        <div class="row mar">
+            <div class="col-md-2">
+                <label for="targetDate">Date:</label>
+            </div>
+            <div class="col-md-3">
+                <input type="date" id="targetDate" name="Date" value="" required />
+            </div>
+        </div>
+        <div class="row mar">
+            <div class="col-md-3">
+                <input class="btn btn-default btn-sm" onclick="submitForm()" value="Convert" />
+            </div>
+        </div>
+    </div>
 
 
-    @Html.LabelFor(x => x.CurrencyTo, "To Currency")
-    @Html.DropDownList("CurrencyTo", ViewBag.AvailableCurrencies as SelectList, "-Select-")
-
-    <label for="Date">Date:</label>
-    <input type="date" id="targetDate" name="Date" value="" required />
-
-    @Html.LabelFor(x => x.Amount, "Amount")
-    @Html.TextBoxFor(x => x.Amount)
-
-    @Html.LabelFor(x => x.ConvertedAmount, "Result")
-    @Html.TextBoxFor(x => x.ConvertedAmount, new { @readonly = "readonly", id = "ConvertedAmount" })
-
-    <input onclick="submitForm()" value="Convert" />
 }
 
 <script>
     function submitForm() {
         $("#ConvertedAmount").val(null)
+        $("#ValidationError").html("");
         jQuery.ajax({
                         url: '@Url.Action("CurrencyConverter", "Currency")',
                         type: 'POST',
                         data: $('#currencyConverterForm').serialize(),
              success: function (data) {
-                 if (data.Errors) {                     
+                 if (data.Errors) {
                      $("#ValidationError").html(data.Errors.join('</br>'));
                  } else {
                      $("#ConvertedAmount").val(data.Result);

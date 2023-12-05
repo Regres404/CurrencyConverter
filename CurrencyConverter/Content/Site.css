@@ -20,5 +20,10 @@
 input,
 select,
 textarea {
-    max-width: 280px;
+    max-width: 130px;
+}
+
+.mar {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
