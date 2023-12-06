@@ -21,7 +21,7 @@ This web application facilitates currency rate retrieval for a specified time in
 
 ### Installation
 
-1. Clone the repository: `git clone https://github.com/Regres404/currency-converter.git`
+1. Clone the repository: `git clone https://github.com/Regres404/CurrencyConverter.git`
 2. Open the solution in Visual Studio.
 3. Update the connection string in `Web.config` to point to your SQL Server instance.
 4. Run the application.
